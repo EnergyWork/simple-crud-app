@@ -3,8 +3,8 @@ package errors
 import "fmt"
 
 type Error struct {
-	Code int    `json:"Errno"`
-	Msg  string `json:"Error"`
+	Code int    `json:"Code"`
+	Msg  string `json:"Message"`
 }
 
 func New() *Error {
@@ -16,8 +16,8 @@ func (e *Error) SetCode(code int) *Error {
 	return e
 }
 
-func (e *Error) SetMsg(msg string) *Error {
-	e.Msg = msg
+func (e *Error) SetMsg(msg string, args ...interface{}) *Error {
+	e.Msg = fmt.Sprintf(msg, args...)
 	return e
 }
 

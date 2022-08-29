@@ -13,3 +13,10 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+/.vscode
+
+*.design.txt
+/pg/pgdata
+/pg/pgadata
+/delete_volumes.sh
