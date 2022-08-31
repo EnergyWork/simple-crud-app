@@ -1,9 +1,6 @@
 package api
 
 import (
-	"database/sql"
-	"encoding/json"
-	"io"
 	"net/http"
 	errs "simple-crud-app/internal/lib/errors"
 	"simple-crud-app/internal/lib/rest"
@@ -12,53 +9,58 @@ import (
 )
 
 type ReqCreateFilm struct {
-	Type        string
-	Name        string
-	ReleaseDate time.Time
-	Duration    string
-	SerialCount int64
-	Score       uint64
-	Comment     string
+	rest.Header
+	Name        string     `json:"name"`
+	ReleaseDate *time.Time `json:"release_date"`
+	Duration    *string    `json:"duration"`
+	Score       *uint64    `json:"score"`
+	Comment     *string    `json:"comment"`
+}
+
+type RplCreateFilm struct {
+	rest.Header
 }
 
 func (obj *ReqCreateFilm) Validate() *errs.Error {
+	if obj.Name == "" {
+		return errs.New().SetCode(errs.ERROR_SYNTAX).SetMsg("Name must be not empty")
+	}
 	return nil
 }
 
 // CreateFilm : POST handler for create film requests
 func (s *Server) CreateFilm(w http.ResponseWriter, r *http.Request) {
+	resp := &RplCreateFilm{}
 	// handle request method
 	if r.Method != http.MethodPost {
 		errApi := errs.New().SetCode(errs.ERROR_METHOD_NOT_ALLOWED).SetMsg("not allowed method - expected POST")
-		rest.CreateRplError(w, errApi)
-		return
-	}
-	// unmarshal request body
-	reqBts, err := io.ReadAll(r.Body)
-	if err != nil {
-		errApi := errs.New().SetCode(errs.ERROR_INTERNAL)
-		rest.CreateRplError(w, errApi)
+		rest.CreateResponseError(w, resp, errApi)
 		return
 	}
 
 	req := &ReqCreateFilm{}
-	if err := json.Unmarshal(reqBts, &req); err != nil {
-		errApi := errs.New().SetCode(errs.ERROR_INTERNAL)
-		rest.CreateRplError(w, errApi)
+	if err := rest.CreateRequest(r, req); err != nil {
+		rest.CreateResponseError(w, resp, err)
+		return
+	}
+
+	// authorization
+	if err := req.Authorize(s.GetDB()); err != nil {
+		rest.CreateResponseError(w, resp, err)
 		return
 	}
 
 	film := &models.Film{
 		Name:        req.Name,
-		Type:        sql.NullString{String: req.Type},
-		ReleaseDate: sql.NullTime{Time: req.ReleaseDate},
-		Duration:    sql.NullString{String: req.Duration},
-		SerialCount: sql.NullInt64{Int64: req.SerialCount},
+		ReleaseDate: req.ReleaseDate,
+		Duration:    req.Duration,
 		Score:       req.Score,
-		Comment:     sql.NullString{String: req.Comment},
+		Comment:     req.Comment,
 	}
 	if err := film.Create(s.GetDB()); err != nil {
-		rest.CreateRplError(w, err)
+		rest.CreateResponseError(w, resp, err)
 		return
 	}
+
+	rest.CreateResponse(w, resp)
 }

@@ -16,7 +16,7 @@
 
 /.vscode
 
-*.design.txt
+*.design.*
 /pg/pgdata
 /pg/pgadata
 /delete_volumes.sh

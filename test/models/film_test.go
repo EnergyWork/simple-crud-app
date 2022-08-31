@@ -25,11 +25,9 @@ func TestCreateFilm(t *testing.T) {
 
 	// forming model data
 	film := &models.Film{}
-	film.Type = &typ
 	film.Name = name
 	film.ReleaseDate = &releaseDate
 	film.Duration = &duration
-	film.SerialCount = &serialCount
 	//film.Score = score
 	//film.Comment = &comment
 
