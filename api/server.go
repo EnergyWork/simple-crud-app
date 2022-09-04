@@ -25,7 +25,8 @@ func (s *Server) configureRouter() {
 	router.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Pong"))
 	})
-	router.HandleFunc("/film/create", s.CreateFilm) // [POST]
+	router.HandleFunc("/auth/registration", s.AuthRegister) // [POST]
+	router.HandleFunc("/auth/login", s.AuthLogin) // [POST]
 	s.SetRouter(router)
 }
 
