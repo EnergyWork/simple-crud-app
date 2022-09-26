@@ -2,33 +2,30 @@ package api
 
 import (
 	"net/http"
-	"simple-crud-app/internal/lib/crypto"
+
 	errs "simple-crud-app/internal/lib/errors"
 	"simple-crud-app/internal/lib/hash"
 	"simple-crud-app/internal/lib/logger"
 	"simple-crud-app/internal/lib/rest"
 	"simple-crud-app/internal/models"
-	"time"
 )
 
 type ReqAuthRegister struct {
 	rest.Header
-	UserName     string `json:"name"`
-	UserPassword string `json:"password"`
+	Login    string `json:"name"`
+	Password string `json:"password"`
 }
 
 type RespAuthRegister struct {
 	rest.Header
-	PublicKey string // base64 crypto.PublicKey
-	ExpiredAt int64
 }
 
 func (obj *ReqAuthRegister) Validate() *errs.Error {
-	if obj.UserName == "" {
-		return errs.New().SetCode(errs.ERROR_SYNTAX).SetMsg("UserName must be not empty")
+	if obj.Login == "" {
+		return errs.New().SetCode(errs.ERROR_SYNTAX).SetMsg("Login must be not empty")
 	}
-	if obj.UserPassword == "" {
-		return errs.New().SetCode(errs.ERROR_SYNTAX).SetMsg("UserPassword must be not empty")
+	if obj.Password == "" {
+		return errs.New().SetCode(errs.ERROR_SYNTAX).SetMsg("Password must be not empty")
 	}
 	return nil
 }
@@ -42,59 +39,66 @@ func (s *Server) AuthRegister(w http.ResponseWriter, r *http.Request) {
 
 	//* Form Request //
 
-	// handle request method
-	if r.Method != http.MethodPost {
-		errApi := errs.New().SetCode(errs.ERROR_METHOD_NOT_ALLOWED).SetMsg("not allowed method - expected POST")
-		rest.CreateResponseError(w, resp, errApi)
-		l.Errorf("error: wrong request method - req: %s, but expected POST", r.Method)
-		return
-	}
 	// unmarshal input request into struct
-	if err := rest.CreateRequest(r, req); err != nil {
-		rest.CreateResponseError(w, resp, err)
-		l.Errorf("errro: unable create request - %s", err)
+	if errApi := rest.CreateRequest(r, req, http.MethodPost); errApi != nil {
+		rest.CreateResponseError(w, resp, errApi)
+		l.Errorf("errro: unable create request - %s", errApi)
 		return
 	}
+
+	//? ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	//* Business Logic //
 
-	hashedPassword, err := hash.NewSHA256Hash(req.UserName)
-	if err != nil {
-		l.Errorf("error: %s", err)
-		rest.CreateResponseError(w, resp, err)
+	// getting password hash
+	hashedPassword, errApi := hash.NewSHA256Hash(req.Password)
+	if errApi != nil {
+		l.Errorf("error: %s", errApi)
+		rest.CreateResponseError(w, resp, errApi)
 		return
 	}
-	req.UserPassword = hashedPassword
+	req.Password = hashedPassword
 
 	l.Debugf("->REQ: %+v", req)
 
-	a := models.UserAuth{
-		UserName:     req.UserName,
-		UserPassword: req.UserPassword,
-	}
-
-	expiredTime := time.Now().AddDate(0, 0, 1)
-
-	privateKey, err := crypto.NewPrivateKey(1024)
+	tx, err := s.GetDB().Begin()
 	if err != nil {
-		l.Error(err)
-		rest.CreateResponseError(w, resp, err)
+		l.Error("unable to create sql trx")
+		rest.CreateResponseError(w, resp, errs.New().SetCode(errs.ERROR_INTERNAL))
+		return
+	}
+	defer tx.Rollback() // tx.Commit will be earlier
+
+	// create session
+	session, errApi := models.NewSession(tx)
+	if errApi != nil {
+		l.Error(errApi)
+		rest.CreateResponseError(w, resp, errs.New().SetCode(errs.ERROR_INTERNAL))
+		return
+	}
+	// create access key (Subject)
+	accessKey, errApi := hash.NewAccessKey(req.Password)
+	if errApi != nil {
+		l.Error(errApi)
+		rest.CreateResponseError(w, resp, errs.New().SetCode(errs.ERROR_INTERNAL))
+		return
+	}
+	// create user with new session
+	user := models.User{
+		Login:     req.Login,
+		Password:  req.Password,
+		SessionID: session.ID,
+		AccessKey: accessKey,
+	}
+	if errApi := user.Create(tx); errApi != nil {
+		l.Error(errApi)
+		rest.CreateResponseError(w, resp, errs.New().SetCode(errs.ERROR_INTERNAL))
 		return
 	}
 
-	a.PrivateKey = *privateKey
-	a.ExpiredAt = expiredTime
-
-	if err := a.UserRegister(s.GetDB()); err != nil {
-		l.Errorf("error: %s", err)
-		rest.CreateResponseError(w, resp, err)
-		return
-	}
-
-	resp.PublicKey = privateKey.Public().GetBase64()
-	resp.ExpiredAt = expiredTime.Unix()
-
+	//? ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//* Response //
+	tx.Commit()
 	rest.CreateResponse(w, resp)
 	l.Debugf("<-RESP: %+v", resp)
 }

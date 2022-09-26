@@ -13,8 +13,8 @@ import (
 
 func TestAuthLogIn(t *testing.T) {
 	reqRegister := api.ReqAuthLogin{
-		UserName:     "Artyom7",
-		UserPassword: "password",
+		Login:    "User002",
+		Password: "password",
 	}
 	js, err := json.Marshal(reqRegister)
 	if err != nil {

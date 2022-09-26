@@ -29,7 +29,18 @@ func NewSHA256Hash(data string) (string, *errs.Error) {
 	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
-func NewApiKey(password string) (string, *errs.Error) {
+// NewAccessKey returns new uniaque key in hex encoded
+func NewAccessKey(password string) (string, *errs.Error) {
+	salt := make([]byte, 32)
+	_, err := io.ReadFull(rand.Reader, salt)
+	if err != nil {
+		return "", errs.New().SetCode(errs.ERROR_INTERNAL).SetMsg("%s", err)
+	}
+	key := argon2.Key([]byte(password), salt, 3, 32*1024, 4, 16)
+	return hex.EncodeToString(key), nil
+}
+
+func NewSecretKey(password string) (string, *errs.Error) {
 	salt := make([]byte, 32)
 	_, err := io.ReadFull(rand.Reader, salt)
 	if err != nil {

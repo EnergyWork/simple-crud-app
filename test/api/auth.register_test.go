@@ -6,15 +6,14 @@ import (
 	"io/ioutil"
 	"net/http"
 	"testing"
-	"time"
 
 	"simple-crud-app/api"
 )
 
 func TestAuthRegister(t *testing.T) {
 	reqRegister := api.ReqAuthRegister{
-		UserName:     "Artyom7",
-		UserPassword: "password",
+		Login:    "User002",
+		Password: "password",
 	}
 	js, err := json.Marshal(reqRegister)
 	if err != nil {
@@ -30,9 +29,7 @@ func TestAuthRegister(t *testing.T) {
 	t.Log("request Headers:", request.Header)
 	t.Log("request Body:", string(js))
 
-	client := &http.Client{
-		Timeout: 10 * time.Second,
-	}
+	client := &http.Client{}
 	resp, err := client.Do(request)
 	if err != nil {
 		t.Fatal(err)

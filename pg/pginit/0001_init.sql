@@ -1,39 +1,54 @@
+set time zone 'Europe/Moscow';
+
+-- Sessons entity
+create table sessions (
+    id bigserial primary key,
+    token varchar unique,
+    created timestamp not null default now(),
+    deadline timestamp
+);
 -- User authorization entity
-create table user_auth (
+create table users (
     id  bigserial primary key,
-    user_name varchar(100) not null unique,
-    user_password varchar not null,
-    private_key varchar not null,
-    expired_at timestamp not null -- if expired need login again
+    session_id bigint not null references sessions (id),
+    login varchar(100) not null unique,
+    password varchar not null,
+    access_key varchar not null,
+    created_at timestamp not null default now(),
+    updated_at timestamp
 );
 
 -- Films entity
-create table film (
+create table films (
     id              bigserial primary key,
-    user_id         bigint not null references user_auth (id),
-    type            varchar(30),
+    user_id         bigint not null references users (id),
     name            varchar(255) not null,
     release_date    timestamp,
     duration        varchar(10),
     score           integer check(score >= 0 and score <= 100),
-    comment         text
+    comment         text,
+    created_at      timestamp not null default now(),
+    updated_at      timestamp
 );
 
 -- Serials entity
-create table serial (
+create table serials (
     id              bigserial primary key,
-    user_id         bigint not null references user_auth (id),
+    user_id         bigint not null references users (id),
     name            varchar(255) not null,
     release_date    timestamp,
-    duration        varchar(10),
     score           integer check(score >= 0 and score <= 100),
-    comment         text
+    comment         text,
+    created_at      timestamp not null default now(),
+    updated_at      timestamp
 );
 
 -- Seasons entity
-create table season (
-    id  bigserial primary key,
-    serial_id bigint references serial (id),
-    number integer not null,
-    series json -- e.g. {"1": "42m", "2": "46m"}
+create table seasons (
+    id              bigserial primary key,
+    serial_id       bigint references serials (id),
+    number          integer not null, -- 
+    series          json, -- e.g. {"1": "42m", "2": "46m"}
+    created_at      timestamp not null default now(),
+    updated_at      timestamp
 );

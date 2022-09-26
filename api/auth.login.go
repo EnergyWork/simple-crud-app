@@ -2,33 +2,32 @@ package api
 
 import (
 	"net/http"
-	"simple-crud-app/internal/lib/crypto"
 	errs "simple-crud-app/internal/lib/errors"
 	"simple-crud-app/internal/lib/hash"
 	"simple-crud-app/internal/lib/logger"
 	"simple-crud-app/internal/lib/rest"
 	"simple-crud-app/internal/models"
-	"time"
 )
 
 type ReqAuthLogin struct {
 	CustomHeader
-	UserName     string `json:"name"`
-	UserPassword string `json:"password"`
+	Login    string `json:"name"`
+	Password string `json:"password"`
 }
 
 type RespAuthLogin struct {
 	rest.Header
-	PublicKey string // base64 crypto.PublicKey
-	ExpiredAt int64
+	AccessKey    string // user's acccess key
+	SessionToken string // session token
+	Deadline     int64  // unix format, token's deadline
 }
 
 func (obj *ReqAuthLogin) Validate() *errs.Error {
-	if obj.UserName == "" {
-		return errs.New().SetCode(errs.ERROR_SYNTAX).SetMsg("UserName must be not empty")
+	if obj.Login == "" {
+		return errs.New().SetCode(errs.ERROR_SYNTAX).SetMsg("Login must be not empty")
 	}
-	if obj.UserPassword == "" {
-		return errs.New().SetCode(errs.ERROR_SYNTAX).SetMsg("UserPassword must be not empty")
+	if obj.Password == "" {
+		return errs.New().SetCode(errs.ERROR_SYNTAX).SetMsg("Password must be not empty")
 	}
 	return nil
 }
@@ -42,69 +41,56 @@ func (s *Server) AuthLogin(w http.ResponseWriter, r *http.Request) {
 
 	//* Form Request //
 
-	if r.Method != http.MethodPost {
-		errApi := errs.New().SetCode(errs.ERROR_METHOD_NOT_ALLOWED).SetMsg("not allowed method - expected POST")
-		rest.CreateResponseError(w, resp, errApi)
-		l.Errorf("error: wrong request method - req: %s, but expected POST", r.Method)
-		return
-	}
 	// unmarshal input request into struct
-	if err := rest.CreateRequest(r, req); err != nil {
+	if err := rest.CreateRequest(r, req, http.MethodPost); err != nil {
 		rest.CreateResponseError(w, resp, err)
 		l.Errorf("errro: unable create request - %s", err)
 		return
 	}
 
-	hashedPassword, err := hash.NewSHA256Hash(req.UserName)
+	//? ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	hashedPassword, err := hash.NewSHA256Hash(req.Password)
 	if err != nil {
 		l.Errorf("error: %s", err)
 		rest.CreateResponseError(w, resp, err)
 		return
 	}
-	req.UserPassword = hashedPassword
+	req.Password = hashedPassword
 
 	l.Debugf("->REQ: %+v", req)
 
 	//* Business Logic //
 
-	a := models.UserAuth{
-		UserName:     req.UserName,
-		UserPassword: req.UserPassword,
-	}
-
-	if err := a.LogIn(s.GetDB()); err != nil {
-		l.Error(err)
-		rest.CreateResponseError(w, resp, err)
+	user, errApi := models.LoadUserByLogin(s.GetDB(), req.Login)
+	if errApi != nil {
+		l.Errorf("unable to load user: %s", errApi)
+		rest.CreateResponseError(w, resp, errApi)
 		return
 	}
 
-	expiredTime := time.Now().AddDate(0, 0, 1)
-
-	if a.IsExpired() {
-		// new private key and update expired
-		privateKey, err := crypto.NewPrivateKey(1024)
-		if err != nil {
-			l.Error(err)
-			rest.CreateResponseError(w, resp, err)
-			return
-		}
-		a.PrivateKey = *privateKey
-		a.ExpiredAt = expiredTime
-	} else {
-		// update expired
-		a.ExpiredAt = expiredTime
-	}
-
-	if err := a.Update(s.GetDB()); err != nil {
-		l.Error(err)
-		rest.CreateResponseError(w, resp, err)
+	if user.Password != req.Password {
+		errApi := errs.New().SetCode(errs.ERROR_FORBIDDEN).SetMsg("wrong password")
+		rest.CreateResponseError(w, resp, errApi)
+		l.Errorf("wrong password")
 		return
 	}
 
-	resp.PublicKey = a.PrivateKey.Public().GetBase64()
-	resp.ExpiredAt = expiredTime.Unix()
+	session, errApi := models.LoadSession(s.GetDB(), user.SessionID)
+	if errApi != nil {
+		l.Errorf("unable to load user's session: %s", errApi)
+		rest.CreateResponseError(w, resp, errApi)
+		return
+	}
+
+	session.UpdateTTL(s.GetDB())
+
+	//? ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	//* Response //
+	resp.AccessKey = user.AccessKey
+	resp.SessionToken = session.Token
+	resp.Deadline = session.Deadline.Unix()
 	rest.CreateResponse(w, resp)
 	l.Debugf("<-RESP: %+v", resp)
 }
