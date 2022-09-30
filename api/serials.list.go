@@ -16,7 +16,7 @@ type ReqSerialList struct {
 
 type RespSerialList struct {
 	rest.Header
-	Serials []models.Serial
+	Serials []models.SerialFull
 	Total   uint64
 }
 
@@ -52,12 +52,15 @@ func (s *Server) SerialList(w http.ResponseWriter, r *http.Request) {
 		Offset: req.Offset,
 		Limit:  req.Limit,
 	}
-	list, total, errApi := serialList.GetList(s.GetDB())
+	tx, _ := s.GetDB().Begin()
+	list, total, errApi := serialList.GetList(tx)
 	if errApi != nil {
+		_ = tx.Rollback()
 		rest.CreateResponseError(w, resp, errApi)
 		l.Error(errApi)
 		return
 	}
+	_ = tx.Commit()
 
 	//? response /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -18,7 +18,7 @@ type Request interface {
 
 func CreateRequest(r *http.Request, req Request, expectedMethod string) *errs.Error {
 	// handle request method
-	if r.Method != http.MethodPost {
+	if r.Method != expectedMethod {
 		return errs.New().SetCode(errs.ERROR_METHOD_NOT_ALLOWED).SetMsg("not allowed method - expected POST")
 	}
 	// read request body
