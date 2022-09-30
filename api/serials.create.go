@@ -9,12 +9,20 @@ import (
 	"time"
 )
 
-type ReqCreateSerial struct {
+type ReqCreateSerial struct { // TODO ещё подумать над структурой запроса
 	CustomHeader
-	Name        string     `json:"name"`
-	ReleaseDate *time.Time `json:"release_date"`
-	Score       *uint64    `json:"score"`
-	Comment     *string    `json:"comment"`
+
+	Serial struct {
+		Name        string     `json:"name"`
+		ReleaseDate *time.Time `json:"release_date"`
+		Score       *uint64    `json:"score"`
+		Comment     *string    `json:"comment"`
+	} `json:"serial"`
+
+	Seasons *[]struct {
+		Number int               `json:"number"`
+		Series map[string]string `json:"series"`
+	} `json:"seasons"`
 }
 
 type RespCreateSerial struct {
@@ -22,7 +30,7 @@ type RespCreateSerial struct {
 }
 
 func (obj *ReqCreateSerial) Validate() *errs.Error {
-	if obj.Name == "" {
+	if obj.Serial.Name == "" {
 		return errs.New().SetCode(errs.ERROR_SYNTAX).SetMsg("Name must be not empty")
 	}
 	return nil
@@ -53,11 +61,11 @@ func (s *Server) CreateSerial(w http.ResponseWriter, r *http.Request) {
 
 	// business logic
 	serial := &models.Serial{
-		Name:        req.Name,
+		Name:        req.Serial.Name,
 		UserID:      req.user.ID,
-		ReleaseDate: req.ReleaseDate,
-		Score:       req.Score,
-		Comment:     req.Comment,
+		ReleaseDate: req.Serial.ReleaseDate,
+		Score:       req.Serial.Score,
+		Comment:     req.Serial.Comment,
 	}
 	if err := serial.Create(s.GetDB()); err != nil {
 		rest.CreateResponseError(w, resp, err)
