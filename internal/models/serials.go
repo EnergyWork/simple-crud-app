@@ -17,10 +17,10 @@ type Serial struct {
 }
 
 func (f *Serial) Create(db DB) *errs.Error {
-	sqlStr := `INSERT INTO serials (user_id, name, release_date, score, comment) VALUES($1, $2, $3, $4, $5, $6);`
+	sqlStr := `INSERT INTO serials (user_id, name, release_date, score, comment) VALUES($1, $2, $3, $4, $5);`
 	_, err := db.Exec(sqlStr, f.UserID, f.Name, f.ReleaseDate, f.Score, f.Comment)
 	if err != nil {
-		return errs.New().SetCode(errs.ERROR_INTERNAL).SetMsg("failed to create a new record: %s", err)
+		return errs.New().SetCode(errs.ErrorInternal).SetMsg("failed to create a new record: %s", err)
 	}
 	return nil
 }

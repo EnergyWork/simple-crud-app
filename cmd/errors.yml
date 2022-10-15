@@ -1,0 +1,6 @@
+400:
+  en: request syntax error
+  ru: неверные параметры запроса
+500:
+  en: internal system error
+  ru: внутренняя ошибка системы

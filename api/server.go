@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"simple-crud-app/internal/lib/config"
 	"simple-crud-app/internal/lib/rest"
+	"simple-crud-app/internal/lib/rest/middleware"
 	"simple-crud-app/pkg/database"
 
 	_ "github.com/lib/pq"
@@ -29,7 +30,8 @@ func (s *Server) configureRouter() {
 	router.HandleFunc("/films/create", s.CreateFilm)        // [POST]
 	router.HandleFunc("/films/delete", s.FilmDelete)        // [POST]
 	router.HandleFunc("/films/update", s.FilmUpdate)        // [POST]
-	s.SetRouter(router)
+	wrappedMux := middleware.NewLoggerRequest(router)
+	s.SetRouter(wrappedMux)
 }
 
 func (s *Server) ConnectToDatabase() error {

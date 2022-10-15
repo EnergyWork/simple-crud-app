@@ -17,22 +17,22 @@ type ReqAuthLogin struct {
 
 type RespAuthLogin struct {
 	rest.Header
-	AccessKey    string // user's acccess key
-	SessionToken string // session token
-	Deadline     int64  // unix format, token's deadline
+	AccessKey    string `json:",omitempty"` // user's access key
+	SessionToken string `json:",omitempty"` // session token
+	Deadline     int64  `json:",omitempty"` // unix format, token's deadline
 }
 
 func (obj *ReqAuthLogin) Validate() *errs.Error {
 	if obj.Login == "" {
-		return errs.New().SetCode(errs.ERROR_SYNTAX).SetMsg("Login must be not empty")
+		return errs.New().SetCode(errs.ErrorRequestSyntax).SetMsg("Login must be not empty")
 	}
 	if obj.Password == "" {
-		return errs.New().SetCode(errs.ERROR_SYNTAX).SetMsg("Password must be not empty")
+		return errs.New().SetCode(errs.ErrorRequestSyntax).SetMsg("Password must be not empty")
 	}
 	return nil
 }
 
-// AuthRegister : POST handler for user registration
+// AuthLogin : user log in
 func (s *Server) AuthLogin(w http.ResponseWriter, r *http.Request) {
 	//* Setup //
 	l := logger.NewLogger().SetMethod("AuthLogin")
@@ -44,11 +44,11 @@ func (s *Server) AuthLogin(w http.ResponseWriter, r *http.Request) {
 	// unmarshal input request into struct
 	if err := rest.CreateRequest(r, req, http.MethodPost); err != nil {
 		rest.CreateResponseError(w, resp, err)
-		l.Errorf("errro: unable create request - %s", err)
+		l.Errorf("error: unable create request - %s", err)
 		return
 	}
 
-	//? ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	hashedPassword, err := hash.NewSHA256Hash(req.Password)
 	if err != nil {
@@ -58,7 +58,8 @@ func (s *Server) AuthLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	req.Password = hashedPassword
 
-	l.Debugf("->REQ: %+v", req)
+	l.Debugf("Request: %+v", req)
+	defer l.Infof("Response: %+v", resp)
 
 	//* Business Logic //
 
@@ -70,7 +71,7 @@ func (s *Server) AuthLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if user.Password != req.Password {
-		errApi := errs.New().SetCode(errs.ERROR_FORBIDDEN).SetMsg("wrong password")
+		errApi := errs.New().SetCode(errs.ErrorForbidden).SetMsg("wrong password")
 		rest.CreateResponseError(w, resp, errApi)
 		l.Errorf("wrong password")
 		return
@@ -85,12 +86,10 @@ func (s *Server) AuthLogin(w http.ResponseWriter, r *http.Request) {
 
 	session.UpdateTTL(s.GetDB())
 
-	//? ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	//* Response //
 	resp.AccessKey = user.AccessKey
 	resp.SessionToken = session.Token
 	resp.Deadline = session.Deadline.Unix()
 	rest.CreateResponse(w, resp)
-	l.Debugf("<-RESP: %+v", resp)
 }

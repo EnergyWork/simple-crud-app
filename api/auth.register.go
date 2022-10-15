@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/google/uuid"
 	"net/http"
 
 	errs "simple-crud-app/internal/lib/errors"
@@ -22,10 +23,10 @@ type RespAuthRegister struct {
 
 func (obj *ReqAuthRegister) Validate() *errs.Error {
 	if obj.Login == "" {
-		return errs.New().SetCode(errs.ERROR_SYNTAX).SetMsg("Login must be not empty")
+		return errs.New().SetCode(errs.ErrorRequestSyntax).SetMsg("Login must be not empty")
 	}
 	if obj.Password == "" {
-		return errs.New().SetCode(errs.ERROR_SYNTAX).SetMsg("Password must be not empty")
+		return errs.New().SetCode(errs.ErrorRequestSyntax).SetMsg("Password must be not empty")
 	}
 	return nil
 }
@@ -33,7 +34,7 @@ func (obj *ReqAuthRegister) Validate() *errs.Error {
 // AuthRegister : POST handler for user registration
 func (s *Server) AuthRegister(w http.ResponseWriter, r *http.Request) {
 	//* Setup //
-	l := logger.NewLogger().SetMethod("AuthRegister")
+	l := logger.NewLogger().SetMethod("AuthRegister").SetID(uuid.NewString())
 	req := &ReqAuthRegister{}
 	resp := &RespAuthRegister{}
 
@@ -42,13 +43,11 @@ func (s *Server) AuthRegister(w http.ResponseWriter, r *http.Request) {
 	// unmarshal input request into struct
 	if errApi := rest.CreateRequest(r, req, http.MethodPost); errApi != nil {
 		rest.CreateResponseError(w, resp, errApi)
-		l.Errorf("errro: unable create request - %s", errApi)
+		l.Errorf("error: unable create request - %s", errApi)
 		return
 	}
 
 	//? ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	//* Business Logic //
 
 	// getting password hash
 	hashedPassword, errApi := hash.NewSHA256Hash(req.Password)
@@ -59,28 +58,27 @@ func (s *Server) AuthRegister(w http.ResponseWriter, r *http.Request) {
 	}
 	req.Password = hashedPassword
 
-	l.Debugf("->REQ: %+v", req)
+	l.Debugf("Request: %+v", req)
+	defer l.Debugf("Response: %+v", resp)
 
-	tx, err := s.GetDB().Begin()
-	if err != nil {
-		l.Error("unable to create sql trx")
-		rest.CreateResponseError(w, resp, errs.New().SetCode(errs.ERROR_INTERNAL))
-		return
-	}
-	defer tx.Rollback() // tx.Commit will be earlier
+	tx, _ := s.GetDB().Begin()
+
+	defer func() {
+		_ = tx.Rollback() // tx.Commit will be earlier
+	}()
 
 	// create session
 	session, errApi := models.NewSession(tx)
 	if errApi != nil {
 		l.Error(errApi)
-		rest.CreateResponseError(w, resp, errs.New().SetCode(errs.ERROR_INTERNAL))
+		rest.CreateResponseError(w, resp, errApi)
 		return
 	}
 	// create access key (Subject)
 	accessKey, errApi := hash.NewAccessKey(req.Password)
 	if errApi != nil {
 		l.Error(errApi)
-		rest.CreateResponseError(w, resp, errs.New().SetCode(errs.ERROR_INTERNAL))
+		rest.CreateResponseError(w, resp, errApi)
 		return
 	}
 	// create user with new session
@@ -92,13 +90,11 @@ func (s *Server) AuthRegister(w http.ResponseWriter, r *http.Request) {
 	}
 	if errApi := user.Create(tx); errApi != nil {
 		l.Error(errApi)
-		rest.CreateResponseError(w, resp, errs.New().SetCode(errs.ERROR_INTERNAL))
+		rest.CreateResponseError(w, resp, errApi)
 		return
 	}
 
 	//? ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	//* Response //
-	tx.Commit()
+	_ = tx.Commit()
 	rest.CreateResponse(w, resp)
-	l.Debugf("<-RESP: %+v", resp)
 }

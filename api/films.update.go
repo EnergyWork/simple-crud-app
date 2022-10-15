@@ -19,7 +19,7 @@ type RespFilmUpdate struct {
 
 func (obj *ReqFilmUpdate) Validate() *errs.Error {
 	if obj.Film.ID == 0 {
-		return errs.New().SetCode(errs.ERROR_SYNTAX).SetMsg("Film.ID must be not null")
+		return errs.New().SetCode(errs.ErrorRequestSyntax).SetMsg("Film.ID must be not null")
 	}
 	return nil
 }

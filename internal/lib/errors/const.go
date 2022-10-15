@@ -1,18 +1,21 @@
 package errors
 
 const (
-	ERROR_NONE = 0
+	ErrorNone = 0
 
-	ERROR_SYNTAX             = 400
-	ERROR_UNAUTHORIZED       = 401
-	ERROR_FORBIDDEN          = 403
-	ERROR_NOT_FOUND          = 404
-	ERROR_METHOD_NOT_ALLOWED = 405
-	ERROR_TIMEOUT            = 408
-	ERROR_ALREADY_EXISTS     = 409
+	ErrorRequestSyntax = 400
+	ErrorUnauthorized  = 401
+	ErrorForbidden     = 403
 
-	ERROR_SESSION_EXPIRED = 440
+	ErrorNotFound     = 404
+	ErrorUserNotFound = 40401
 
-	ERROR_INTERNAL        = 500
-	ERROR_NOT_IMPLEMENTED = 501
+	ErrorMethodNotAllowed = 405
+	ErrorTimeout          = 408
+	ErrorAlreadyExists    = 409
+
+	ErrorSessionExpired = 440
+
+	ErrorInternal       = 500
+	ErrorNotImplemented = 501
 )

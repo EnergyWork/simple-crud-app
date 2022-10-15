@@ -26,22 +26,32 @@ func init() {
 func main() {
 	// init logger
 	l := logger.NewLogger().SetMethod("Server")
+
 	// load service config
 	cfg, err := config.NewConfig(configFile)
 	if err != nil {
 		l.Fatal(err)
 	}
 	l.Infof("Loaded config file: %s", configFile)
+
 	// create a new http server
 	server := api.NewHttpServer(cfg)
+
+	// initiate errors description
+	if err := server.InitErrors(cfg.ErrorsFile); err != nil {
+		l.Fatal(err)
+	}
+
 	// connect to database (connection parameters in the config)
 	if err := server.ConnectToDatabase(); err != nil {
 		l.Fatal(err)
 	}
 	l.Infof("Connected to database: %s:%s", cfg.Sql.Host, cfg.Sql.Port)
+
 	// run the http server
 	l.Infof("Server listening: %s:%s", cfg.Api.Host, cfg.Api.Port)
 	server.Run()
+
 	// almost graceful shutdown
 	exit := make(chan os.Signal, 1)
 	signal.Notify(exit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)

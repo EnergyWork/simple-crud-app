@@ -13,14 +13,14 @@ type CustomHeader struct {
 
 func (obj *CustomHeader) CheckSession(db models.DB) *errs.Error {
 	if obj.user.Login != obj.Login { // obj.user.Login loaded by access key  --  obj.Login from X-User header
-		return errs.New().SetCode(errs.ERROR_UNAUTHORIZED).SetMsg("unauthorized request")
+		return errs.New().SetCode(errs.ErrorUnauthorized).SetMsg("unauthorized request")
 	}
 	session, errApi := obj.user.Session(db)
 	if errApi != nil {
-		return errs.New().SetCode(errs.ERROR_INTERNAL).SetMsg("%s", errApi)
+		return errs.New().SetCode(errs.ErrorInternal).SetMsg("%s", errApi)
 	}
 	if session.IsExpired() {
-		return errs.New().SetCode(errs.ERROR_SESSION_EXPIRED).SetMsg("session is expired")
+		return errs.New().SetCode(errs.ErrorSessionExpired).SetMsg("session is expired")
 	}
 	return nil
 }
@@ -32,7 +32,7 @@ func (obj *CustomHeader) Authorize(db models.DB) *errs.Error {
 	}
 	obj.user = user // set user to request
 	if user.AccessKey != obj.AccessKey {
-		return errs.New().SetCode(errs.ERROR_FORBIDDEN).SetMsg("wrong access key")
+		return errs.New().SetCode(errs.ErrorForbidden).SetMsg("wrong access key")
 	}
 	return nil
 }

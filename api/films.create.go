@@ -24,7 +24,7 @@ type RespCreateFilm struct {
 
 func (obj *ReqCreateFilm) Validate() *errs.Error {
 	if obj.Name == "" {
-		return errs.New().SetCode(errs.ERROR_SYNTAX).SetMsg("Name must be not empty")
+		return errs.New().SetCode(errs.ErrorRequestSyntax).SetMsg("Name must be not empty")
 	}
 	return nil
 }

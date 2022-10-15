@@ -19,7 +19,7 @@ type RespFilmDelete struct {
 
 func (obj *ReqFilmDelete) Validate() *errs.Error {
 	if obj.ID != 0 {
-		return errs.New().SetCode(errs.ERROR_SYNTAX).SetMsg("ID must be not null")
+		return errs.New().SetCode(errs.ErrorRequestSyntax).SetMsg("ID must be not null")
 	}
 	return nil
 }

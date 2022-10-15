@@ -29,7 +29,7 @@ func (s *Session) UpdateTTL(db DB, ttl ...time.Duration) *errs.Error {
 	const sqlStr = `UPDATE sessions SET token=$1, deadline=$2 WHERE id=$3`
 	_, errApi := db.Exec(sqlStr, s.Token, s.Deadline, s.ID)
 	if errApi != nil {
-		return errs.New().SetCode(errs.ERROR_INTERNAL)
+		return errs.New().SetCode(errs.ErrorInternal)
 	}
 	return nil
 }
@@ -52,7 +52,7 @@ func NewSession(db DB, ttl ...time.Duration) (*Session, *errs.Error) {
 	const sqlStr = `INSERT INTO sessions (token, created, deadline) VALUES($1,$2,$3) RETURNING id`
 	err := db.QueryRow(sqlStr, s.Token, s.Created, s.Deadline).Scan(&s.ID)
 	if err != nil {
-		return nil, errs.New().SetCode(errs.ERROR_INTERNAL).SetMsg(err.Error())
+		return nil, errs.New().SetCode(errs.ErrorInternal).SetMsg(err.Error())
 	}
 	return s, nil
 }
@@ -62,7 +62,7 @@ func LoadSession(db DB, id uint64) (*Session, *errs.Error) {
 	const sqlStr = `SELECT * FROM sessions WHERE id=$1`
 	err := db.QueryRow(sqlStr, id).Scan(&s.ID, &s.Token, &s.Created, &s.Deadline)
 	if err != nil {
-		return nil, errs.New().SetCode(errs.ERROR_INTERNAL).SetMsg("%s", err)
+		return nil, errs.New().SetCode(errs.ErrorInternal).SetMsg("%s", err)
 	}
 	return s, nil
 }
@@ -71,7 +71,7 @@ func CloseSession(db DB, id uint64) *errs.Error {
 	const sqlStr = `UPDATE sessions SET deadline=now() WHERE id=$1`
 	_, err := db.Exec(sqlStr, id)
 	if err != nil {
-		return errs.New().SetCode(errs.ERROR_INTERNAL).SetMsg("%s", err)
+		return errs.New().SetCode(errs.ErrorInternal).SetMsg("%s", err)
 	}
 	return nil
 }

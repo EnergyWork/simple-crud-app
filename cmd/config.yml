@@ -8,3 +8,4 @@ sql:
   password: postgres
   database: app_storage
   sslmode: disable
+errors: errors.yml

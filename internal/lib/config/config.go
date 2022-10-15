@@ -21,6 +21,8 @@ type Config struct {
 		SslMode  string `yaml:"sslmode"`
 		Database string `yaml:"database"`
 	} `yaml:"sql"`
+
+	ErrorsFile string `yaml:"errors"`
 }
 
 func NewConfig(path string) (*Config, error) {

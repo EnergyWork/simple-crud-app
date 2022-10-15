@@ -29,7 +29,7 @@ type PublicKey struct {
 func NewPrivateKey(bits int) (*PrivateKey, *errs.Error) {
 	privateKey, err := rsa.GenerateKey(rand.Reader, bits)
 	if err != nil {
-		return nil, errs.New().SetCode(errs.ERROR_INTERNAL).SetMsg("unable generate rsa keys: %s", err)
+		return nil, errs.New().SetCode(errs.ErrorInternal).SetMsg("unable generate rsa keys: %s", err)
 	}
 	tmp := &PrivateKey{}
 	tmp.SetRsaPrivateKey(privateKey)
@@ -46,12 +46,12 @@ func (obj *PrivateKey) LoadRsaPrivateKey(key string) *errs.Error {
 	// decode string with key in bytes
 	privateKeyBts, err := base64.StdEncoding.DecodeString(key)
 	if err != nil {
-		return errs.New().SetCode(errs.ERROR_INTERNAL).SetMsg("%s", err)
+		return errs.New().SetCode(errs.ErrorInternal).SetMsg("%s", err)
 	}
 	// parse bytes to private key
 	privateKey, err := x509.ParsePKCS1PrivateKey(privateKeyBts)
 	if err != nil {
-		return errs.New().SetCode(errs.ERROR_INTERNAL).SetMsg("%s", err)
+		return errs.New().SetCode(errs.ErrorInternal).SetMsg("%s", err)
 	}
 	// then set
 	obj.SetRsaPrivateKey(privateKey)
@@ -73,7 +73,7 @@ func (obj *PrivateKey) Sign(data []byte) ([]byte, *errs.Error) {
 	hashed := sha256.Sum256(data)
 	sign, err := rsa.SignPKCS1v15(rand.Reader, obj.rsa, crypto.SHA256, hashed[:])
 	if err != nil {
-		return nil, errs.New().SetCode(errs.ERROR_INTERNAL).SetMsg("%s", err)
+		return nil, errs.New().SetCode(errs.ErrorInternal).SetMsg("%s", err)
 	}
 	return sign, nil
 }
@@ -81,7 +81,7 @@ func (obj *PrivateKey) Sign(data []byte) ([]byte, *errs.Error) {
 func (obj *PrivateKey) Verify(hashed []byte, signature string) *errs.Error {
 	err := rsa.VerifyPKCS1v15(obj.Public().GetRSA(), crypto.SHA256, hashed, []byte(signature))
 	if err != nil {
-		return errs.New().SetCode(errs.ERROR_UNAUTHORIZED).SetMsg("unauthorized")
+		return errs.New().SetCode(errs.ErrorUnauthorized).SetMsg("unauthorized")
 	}
 	return nil
 }
@@ -89,7 +89,7 @@ func (obj *PrivateKey) Verify(hashed []byte, signature string) *errs.Error {
 func (obj *PrivateKey) Decrypt(data []byte) (string, *errs.Error) {
 	res, err := rsa.DecryptOAEP(sha256.New(), rand.Reader, obj.rsa, data, nil)
 	if err != nil {
-		return "", errs.New().SetCode(errs.ERROR_INTERNAL).SetMsg("%s", err)
+		return "", errs.New().SetCode(errs.ErrorInternal).SetMsg("%s", err)
 	}
 	return hex.EncodeToString(res), nil
 }
@@ -126,12 +126,12 @@ func (obj *PublicKey) LoadRsaPubliceKey(key string) *errs.Error {
 	// decode string with key in bytes
 	publicKeyBts, err := base64.StdEncoding.DecodeString(key)
 	if err != nil {
-		return errs.New().SetCode(errs.ERROR_INTERNAL).SetMsg("%s", err)
+		return errs.New().SetCode(errs.ErrorInternal).SetMsg("%s", err)
 	}
 	// parse bytes to private key
 	publicKey, err := x509.ParsePKCS1PublicKey(publicKeyBts)
 	if err != nil {
-		return errs.New().SetCode(errs.ERROR_INTERNAL).SetMsg("%s", err)
+		return errs.New().SetCode(errs.ErrorInternal).SetMsg("%s", err)
 	}
 	// then set
 	obj.rsa = publicKey
@@ -169,7 +169,7 @@ func (obj PublicKey) MasrhallJSON() ([]byte, error) {
 func (obj *PublicKey) Encrypt(msg []byte) (string, *errs.Error) {
 	res, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, obj.rsa, msg, nil)
 	if err != nil {
-		return "", errs.New().SetCode(errs.ERROR_INTERNAL).SetMsg("%s", err)
+		return "", errs.New().SetCode(errs.ErrorInternal).SetMsg("%s", err)
 	}
 	resStr := hex.EncodeToString(res)
 	return resStr, nil
