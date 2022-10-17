@@ -5,16 +5,16 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"simple-crud-app/api/handlers"
 	"testing"
 	"time"
 
-	"simple-crud-app/api"
 	"simple-crud-app/internal/models"
 )
 
 func TestFilmUpdate(t *testing.T) {
 	dur := "45m3s"
-	req := api.ReqFilmUpdate{
+	req := handlers.ReqFilmUpdate{
 		Film: models.Film{
 			ID:       2,
 			Name:     "UpdatedName",

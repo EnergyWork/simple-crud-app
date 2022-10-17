@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"simple-crud-app/api"
+	"simple-crud-app/api/handlers"
 	"simple-crud-app/internal/lib/config"
 	"simple-crud-app/internal/lib/logger"
 	"syscall"
@@ -35,7 +35,7 @@ func main() {
 	l.Infof("Loaded config file: %s", configFile)
 
 	// create a new http server
-	server := api.NewHttpServer(cfg)
+	server := handlers.NewHttpServer(cfg)
 
 	// initiate errors description
 	if err := server.InitErrors(cfg.ErrorsFile); err != nil {

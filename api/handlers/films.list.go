@@ -1,4 +1,4 @@
-package api
+package handlers
 
 import (
 	"net/http"
@@ -10,6 +10,8 @@ import (
 
 type ReqFilmList struct {
 	CustomHeader
+	// TODO SortParameters
+	// TODO VALIDATE
 	Offset uint64
 	Limit  uint64
 }
@@ -24,21 +26,21 @@ func (obj *ReqFilmList) Validate() *errs.Error {
 	return nil
 }
 
-// FilmDelete :
+// FilmList :
 func (s *Server) FilmList(w http.ResponseWriter, r *http.Request) {
-	l := logger.NewLogger().SetMethod("FilmDelete")
+	l := logger.NewLogger().SetMethod("FilmList")
 	req := &ReqFilmList{}
 	resp := &RespFilmList{}
 
 	//unmarshal input request into struct
-	if err := rest.CreateRequest(r, req, http.MethodPost); err != nil {
-		rest.CreateResponseError(w, resp, err)
-		l.Errorf("errro: unable create request - %s", err)
+	if err := rest.CreateRequest(r, &s.BaseServer, req, http.MethodPost); err != nil {
+		rest.CreateResponseError(w, err)
+		l.Errorf("error: unable create request - %s", err)
 		return
 	}
 
 	if errApi := rest.Prepare(s.GetDB(), req); errApi != nil {
-		rest.CreateResponseError(w, resp, errApi)
+		rest.CreateResponseError(w, errApi)
 		l.Errorf("error: %s", errApi)
 		return
 	}
@@ -54,7 +56,7 @@ func (s *Server) FilmList(w http.ResponseWriter, r *http.Request) {
 	}
 	list, total, errApi := filmList.GetList(s.GetDB())
 	if errApi != nil {
-		rest.CreateResponseError(w, resp, errApi)
+		rest.CreateResponseError(w, errApi)
 		l.Error(errApi)
 		return
 	}

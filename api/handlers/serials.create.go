@@ -1,4 +1,4 @@
-package api
+package handlers
 
 import (
 	"net/http"
@@ -40,14 +40,14 @@ func (s *Server) CreateSerial(w http.ResponseWriter, r *http.Request) {
 	resp := &RespCreateSerial{}
 
 	//unmarshal input request into struct
-	if errApi := rest.CreateRequest(r, req, http.MethodPost); errApi != nil {
-		rest.CreateResponseError(w, resp, errApi)
+	if errApi := rest.CreateRequest(r, &s.BaseServer, req, http.MethodPost); errApi != nil {
+		rest.CreateResponseError(w, errApi)
 		l.Errorf("error: unable create request - %s", errApi)
 		return
 	}
 
 	if errApi := rest.Prepare(s.GetDB(), req); errApi != nil {
-		rest.CreateResponseError(w, resp, errApi)
+		rest.CreateResponseError(w, errApi)
 		l.Errorf("error: %s", errApi)
 		return
 	}
@@ -73,7 +73,7 @@ func (s *Server) CreateSerial(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := serial.Create(tx); err != nil {
 		_ = tx.Rollback()
-		rest.CreateResponseError(w, resp, err)
+		rest.CreateResponseError(w, err)
 		l.Errorf("error: %s", err)
 		return
 	}
@@ -86,7 +86,7 @@ func (s *Server) CreateSerial(w http.ResponseWriter, r *http.Request) {
 		}
 		if err := seasonTmp.Create(tx); err != nil {
 			_ = tx.Rollback()
-			rest.CreateResponseError(w, resp, err)
+			rest.CreateResponseError(w, err)
 			l.Errorf("error: %s", err)
 			return
 		}

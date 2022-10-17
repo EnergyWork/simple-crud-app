@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"database/sql"
 	"net/http"
 
 	"golang.org/x/text/language"
@@ -11,24 +12,23 @@ import (
 
 type Header struct {
 	Error     *errs.Error  `json:"Error"`
-	Token     string       `json:"-"`
 	AccessKey string       `json:"-"`
 	Login     string       `json:"-"`
 	Digest    string       `json:"-"`
 	ReqID     string       `json:"-"`
 	Language  language.Tag `json:"-"`
+
+	db *sql.DB
 }
 
 const (
-	TokenHeader     = "X-Token"         // Session token
 	AccessKeyHeader = "X-AccessKey"     // Access Key
 	LoginHeader     = "X-User"          // User login
 	AcceptLanguage  = "Accept-Language" // Request language
 )
 
 // SetHeader sets request headers to header struct
-func (h *Header) SetHeader(r *http.Request) {
-	h.Token = r.Header.Get(TokenHeader)
+func (h *Header) SetHeader(r *http.Request, s *BaseServer) {
 	h.AccessKey = r.Header.Get(AccessKeyHeader)
 	h.Login = r.Header.Get(LoginHeader)
 	lang := r.Header.Get(AcceptLanguage)
@@ -38,6 +38,8 @@ func (h *Header) SetHeader(r *http.Request) {
 	} else {
 		h.Language = tag
 	}
+	//
+	h.db = s.GetDB()
 }
 
 func (h *Header) SetError(err *errs.Error) {
@@ -48,6 +50,10 @@ func (h *Header) SetReqID(reqID string) {
 	if h.ReqID == "" {
 		h.ReqID = reqID
 	}
+}
+
+func (h *Header) GetDB() *sql.DB {
+	return h.db
 }
 
 func (h *Header) Validate() *errs.Error {

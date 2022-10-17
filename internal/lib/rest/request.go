@@ -10,7 +10,7 @@ import (
 )
 
 type Request interface {
-	SetHeader(*http.Request)
+	SetHeader(*http.Request, *BaseServer)
 	SetError(*errs.Error)
 	SetReqID(string)
 	Authorize(models.DB) *errs.Error
@@ -18,21 +18,23 @@ type Request interface {
 	Validate() *errs.Error
 }
 
-func CreateRequest(r *http.Request, req Request, expectedMethod string) *errs.Error {
+func CreateRequest(r *http.Request, s *BaseServer, req Request, expectedMethod string) *errs.Error {
 	// handle request method
 	if r.Method != expectedMethod {
 		return errs.New().SetCode(errs.ErrorMethodNotAllowed).SetMsg("not allowed method - expected POST")
 	}
-	// read request body
-	reqBts, err := io.ReadAll(r.Body)
-	if err != nil {
-		return errs.New().SetCode(errs.ErrorInternal).SetMsg("internal system error: read request body")
+	if r.Method != http.MethodGet {
+		// read request body
+		reqBts, err := io.ReadAll(r.Body)
+		if err != nil {
+			return errs.New().SetCode(errs.ErrorInternal).SetMsg("internal system error: read request body")
+		}
+		// unmarshal bytes to request struct
+		if err := json.Unmarshal(reqBts, &req); err != nil {
+			return errs.New().SetCode(errs.ErrorInternal).SetMsg("internal system error: unmarshal body to request struct")
+		}
 	}
-	// unmarshal bytes to request struct
-	if err := json.Unmarshal(reqBts, &req); err != nil {
-		return errs.New().SetCode(errs.ErrorInternal).SetMsg("internal system error: unmarshal body to request struct")
-	}
-	req.SetHeader(r)
+	req.SetHeader(r, s)
 	req.SetReqID(uuid.NewString())
 	return nil
 }

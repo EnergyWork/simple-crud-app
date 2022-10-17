@@ -1,4 +1,4 @@
-package api
+package handlers
 
 import (
 	"net/http"
@@ -36,14 +36,14 @@ func (s *Server) CreateFilm(w http.ResponseWriter, r *http.Request) {
 	resp := &RespCreateFilm{}
 
 	//unmarshal input request into struct
-	if errApi := rest.CreateRequest(r, req, http.MethodPost); errApi != nil {
-		rest.CreateResponseError(w, resp, errApi)
+	if errApi := rest.CreateRequest(r, &s.BaseServer, req, http.MethodPost); errApi != nil {
+		rest.CreateResponseError(w, errApi)
 		l.Errorf("errro: unable create request - %s", errApi)
 		return
 	}
 
 	if errApi := rest.Prepare(s.GetDB(), req); errApi != nil {
-		rest.CreateResponseError(w, resp, errApi)
+		rest.CreateResponseError(w, errApi)
 		l.Errorf("error: %s", errApi)
 		return
 	}
@@ -62,7 +62,7 @@ func (s *Server) CreateFilm(w http.ResponseWriter, r *http.Request) {
 		Comment:     req.Comment,
 	}
 	if err := film.Create(s.GetDB()); err != nil {
-		rest.CreateResponseError(w, resp, err)
+		rest.CreateResponseError(w, err)
 		l.Errorf("error: %s", err)
 		return
 	}

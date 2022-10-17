@@ -10,7 +10,7 @@ type FilmList struct {
 
 func (fl *FilmList) GetList(db DB) ([]Film, uint64, *errs.Error) {
 	var total uint64
-	if err := db.QueryRow(`SELECT count(*) FROM films WHERE user_id=$1`).Scan(&total); err != nil {
+	if err := db.QueryRow(`SELECT count(*) FROM films WHERE user_id=$1`, fl.UserID).Scan(&total); err != nil {
 		return nil, 0, errs.New().SetCode(errs.ErrorInternal).SetMsg("unable to count total: %s", err)
 	}
 	sqlStr := `SELECT * FROM films WHERE user_id=$1 OFFSET $2 LIMIT $3`
@@ -18,12 +18,14 @@ func (fl *FilmList) GetList(db DB) ([]Film, uint64, *errs.Error) {
 	if err != nil {
 		return nil, 0, errs.New().SetCode(errs.ErrorInternal).SetMsg("%s", err)
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 
-	list := []Film{}
+	var list []Film
 	for rows.Next() {
 		tmp := Film{}
-		if err := rows.Scan(&tmp.ID, &tmp.UserID, &tmp.Name, &tmp.ReleaseDate, &tmp.Duration, &tmp.Score); err != nil {
+		if err := rows.Scan(&tmp.ID, &tmp.UserID, &tmp.Name, &tmp.ReleaseDate, &tmp.Duration, &tmp.Score, &tmp.Comment, &tmp.CreatedAt, &tmp.UpdatedAt); err != nil {
 			return nil, 0, errs.New().SetCode(errs.ErrorInternal).SetMsg("%s", err)
 		}
 		list = append(list, tmp)

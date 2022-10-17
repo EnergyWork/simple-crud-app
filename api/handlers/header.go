@@ -1,4 +1,4 @@
-package api
+package handlers
 
 import (
 	errs "simple-crud-app/internal/lib/errors"
@@ -30,7 +30,7 @@ func (obj *CustomHeader) Authorize(db models.DB) *errs.Error {
 	if errApi != nil {
 		return errApi
 	}
-	obj.user = user // set user to request
+	obj.user = user // setup user for request
 	if user.AccessKey != obj.AccessKey {
 		return errs.New().SetCode(errs.ErrorForbidden).SetMsg("wrong access key")
 	}

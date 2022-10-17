@@ -5,16 +5,15 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"simple-crud-app/api/handlers"
 	"testing"
 	"time"
-
-	"simple-crud-app/api"
 )
 
 func TestFilmCreate(t *testing.T) {
 	var score uint64 = 80
 	var comment string = "OK"
-	reqRegister := api.ReqCreateFilm{
+	reqRegister := handlers.ReqCreateFilm{
 		Name:    "FILM NAME",
 		Score:   &score,
 		Comment: &comment,

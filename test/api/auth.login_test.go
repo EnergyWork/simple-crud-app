@@ -5,14 +5,13 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"simple-crud-app/api/handlers"
 	"testing"
 	"time"
-
-	"simple-crud-app/api"
 )
 
 func TestAuthLogIn(t *testing.T) {
-	reqRegister := api.ReqAuthLogin{
+	reqRegister := handlers.ReqAuthLogin{
 		Login:    "User002",
 		Password: "password",
 	}

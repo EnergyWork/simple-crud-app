@@ -68,8 +68,8 @@ func LoadSession(db DB, id uint64) (*Session, *errs.Error) {
 }
 
 func CloseSession(db DB, id uint64) *errs.Error {
-	const sqlStr = `UPDATE sessions SET deadline=now() WHERE id=$1`
-	_, err := db.Exec(sqlStr, id)
+	const sqlStr = `UPDATE sessions SET deadline=$2 WHERE id=$1`
+	_, err := db.Exec(sqlStr, id, time.Now())
 	if err != nil {
 		return errs.New().SetCode(errs.ErrorInternal).SetMsg("%s", err)
 	}

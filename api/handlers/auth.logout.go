@@ -1,4 +1,4 @@
-package api
+package handlers
 
 import (
 	"net/http"
@@ -18,21 +18,21 @@ type RespAuthLogout struct {
 // AuthLogout ...
 func (s *Server) AuthLogout(w http.ResponseWriter, r *http.Request) {
 	//* Setup //
-	l := logger.NewLogger().SetMethod("AuthLogin")
+	l := logger.NewLogger().SetMethod("AuthLogout")
 	req := &ReqAuthLogout{}
 	resp := &RespAuthLogout{}
 
 	//* Form Request //
 
 	// unmarshal input request into struct
-	if err := rest.CreateRequest(r, req, http.MethodPost); err != nil {
-		rest.CreateResponseError(w, resp, err)
+	if err := rest.CreateRequest(r, &s.BaseServer, req, http.MethodGet); err != nil {
+		rest.CreateResponseError(w, err)
 		l.Errorf("errro: unable create request - %s", err)
 		return
 	}
 
 	if errApi := rest.Prepare(s.GetDB(), req); errApi != nil {
-		rest.CreateResponseError(w, resp, errApi)
+		rest.CreateResponseError(w, errApi)
 		l.Errorf("error: %s", errApi)
 		return
 	}
@@ -45,13 +45,13 @@ func (s *Server) AuthLogout(w http.ResponseWriter, r *http.Request) {
 
 	user, errApi := models.LoadUserByAccessKey(s.GetDB(), req.AccessKey)
 	if errApi != nil {
-		rest.CreateResponseError(w, resp, errApi)
+		rest.CreateResponseError(w, errApi)
 		l.Errorf("%s", errApi)
 		return
 	}
 
 	if errApi := user.CloseSession(s.GetDB()); errApi != nil {
-		rest.CreateResponseError(w, resp, errApi)
+		rest.CreateResponseError(w, errApi)
 		l.Errorf("%s", errApi)
 		return
 	}

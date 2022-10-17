@@ -5,14 +5,13 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"simple-crud-app/api/handlers"
 	"testing"
 	"time"
-
-	"simple-crud-app/api"
 )
 
 func TestFilmDelete(t *testing.T) {
-	req := api.ReqFilmDelete{
+	req := handlers.ReqFilmDelete{
 		ID: 1,
 	}
 	js, err := json.Marshal(req)

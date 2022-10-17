@@ -5,14 +5,13 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"simple-crud-app/api/handlers"
 	"testing"
 	"time"
-
-	"simple-crud-app/api"
 )
 
 func TestAuthLogOut(t *testing.T) {
-	reqRegister := api.ReqAuthLogout{}
+	reqRegister := handlers.ReqAuthLogout{}
 	js, err := json.Marshal(reqRegister)
 	if err != nil {
 		t.Fatal(err)

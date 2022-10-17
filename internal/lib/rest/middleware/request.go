@@ -15,7 +15,7 @@ func NewLoggerRequest(handlerToWarp http.Handler) *LoggerRequest {
 }
 
 func (obj *LoggerRequest) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	mwLogger := logger.NewLogger().SetMethod("MW-LOG")
+	mwLogger := logger.NewLogger().SetMethod("Server")
 	message := fmt.Sprintf("%s | URL:%s", r.Method, r.URL.Path)
 	mwLogger.Info(message)
 	obj.handler.ServeHTTP(w, r)

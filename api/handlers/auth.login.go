@@ -1,4 +1,4 @@
-package api
+package handlers
 
 import (
 	"net/http"
@@ -42,8 +42,8 @@ func (s *Server) AuthLogin(w http.ResponseWriter, r *http.Request) {
 	//* Form Request //
 
 	// unmarshal input request into struct
-	if err := rest.CreateRequest(r, req, http.MethodPost); err != nil {
-		rest.CreateResponseError(w, resp, err)
+	if err := rest.CreateRequest(r, &s.BaseServer, req, http.MethodPost); err != nil {
+		rest.CreateResponseError(w, err)
 		l.Errorf("error: unable create request - %s", err)
 		return
 	}
@@ -53,7 +53,7 @@ func (s *Server) AuthLogin(w http.ResponseWriter, r *http.Request) {
 	hashedPassword, err := hash.NewSHA256Hash(req.Password)
 	if err != nil {
 		l.Errorf("error: %s", err)
-		rest.CreateResponseError(w, resp, err)
+		rest.CreateResponseError(w, err)
 		return
 	}
 	req.Password = hashedPassword
@@ -66,13 +66,13 @@ func (s *Server) AuthLogin(w http.ResponseWriter, r *http.Request) {
 	user, errApi := models.LoadUserByLogin(s.GetDB(), req.Login)
 	if errApi != nil {
 		l.Errorf("unable to load user: %s", errApi)
-		rest.CreateResponseError(w, resp, errApi)
+		rest.CreateResponseError(w, errApi)
 		return
 	}
 
 	if user.Password != req.Password {
 		errApi := errs.New().SetCode(errs.ErrorForbidden).SetMsg("wrong password")
-		rest.CreateResponseError(w, resp, errApi)
+		rest.CreateResponseError(w, errApi)
 		l.Errorf("wrong password")
 		return
 	}
@@ -80,7 +80,7 @@ func (s *Server) AuthLogin(w http.ResponseWriter, r *http.Request) {
 	session, errApi := models.LoadSession(s.GetDB(), user.SessionID)
 	if errApi != nil {
 		l.Errorf("unable to load user's session: %s", errApi)
-		rest.CreateResponseError(w, resp, errApi)
+		rest.CreateResponseError(w, errApi)
 		return
 	}
 
@@ -89,7 +89,5 @@ func (s *Server) AuthLogin(w http.ResponseWriter, r *http.Request) {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	resp.AccessKey = user.AccessKey
-	resp.SessionToken = session.Token
-	resp.Deadline = session.Deadline.Unix()
 	rest.CreateResponse(w, resp)
 }
