@@ -22,25 +22,35 @@ func NewHttpServer(cfg *config.Config) *Server {
 	return s
 }
 
+// ConfigureRouter : all requests are of the POST method
 func (s *Server) ConfigureRouter() {
 	authHandler := NewAuthHandler(s.GetDB())
 	filmsHandler := NewFilmsHandler(s.GetDB())
+	/*serialsHandler := NewSerialsHandler(s.GetDB())*/
 
 	router := http.NewServeMux()
 
+	// ping request
 	router.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("pong"))
 	})
 
-	router.HandleFunc("/auth/registration", authHandler.Registration) // [POST]
-	router.HandleFunc("/auth/login", authHandler.Login)               // [POST]
-	router.HandleFunc("/auth/logout", authHandler.Logout)             // [POST]
+	// authorization handlers
+	router.HandleFunc("/auth/registration", authHandler.Registration)
+	router.HandleFunc("/auth/login", authHandler.Login)
+	router.HandleFunc("/auth/logout", authHandler.Logout)
 
-	router.HandleFunc("/films/list", filmsHandler.List)     // [POST]
-	router.HandleFunc("/films/create", filmsHandler.Create) // [POST]
-	router.HandleFunc("/films/delete", s.FilmDelete)        // [POST]
-	router.HandleFunc("/films/update", s.FilmUpdate)        // [POST]
+	// film handlers
+	router.HandleFunc("/films/list", filmsHandler.List)
+	router.HandleFunc("/films/create", filmsHandler.Create)
+	router.HandleFunc("/films/delete", filmsHandler.Delete)
+	router.HandleFunc("/films/update", filmsHandler.Update)
+
+	// serial handlers
+	/*
+		someday there will be an implementation
+	*/
 
 	wrappedMux := middleware.NewLoggerRequest(router)
 

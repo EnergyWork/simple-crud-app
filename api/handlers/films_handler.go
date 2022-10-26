@@ -22,3 +22,15 @@ func (obj *FilmsHandler) List(w http.ResponseWriter, r *http.Request) {
 func (obj *FilmsHandler) Create(w http.ResponseWriter, r *http.Request) {
 	_ = rest.BaseHandler(w, r, &films.ReqCreateFilm{}, &films.RespCreateFilm{}, obj.dbConn, "FilmCreate", true)
 }
+
+func (obj *FilmsHandler) Read(w http.ResponseWriter, r *http.Request) {
+	_ = rest.BaseHandler(w, r, &films.ReqFilmGet{}, &films.RespFilmGet{}, obj.dbConn, "FilmGet", true)
+}
+
+func (obj *FilmsHandler) Update(w http.ResponseWriter, r *http.Request) {
+	_ = rest.BaseHandler(w, r, &films.ReqFilmUpdate{}, &films.RespFilmUpdate{}, obj.dbConn, "FilmUpdate", true)
+}
+
+func (obj *FilmsHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	_ = rest.BaseHandler(w, r, &films.ReqFilmDelete{}, &films.RespFilmDelete{}, obj.dbConn, "FilmDelete", true)
+}

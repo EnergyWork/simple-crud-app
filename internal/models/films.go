@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"simple-crud-app/internal/domain"
 	"time"
 
 	errs "simple-crud-app/internal/lib/errors"
@@ -51,6 +52,16 @@ func (f *Film) IsExist(db DB) *errs.Error {
 		return errs.New().SetCode(errs.ErrorNotFound)
 	}
 	return nil
+}
+
+func (f *Film) Convert() *domain.Film {
+	return &domain.Film{
+		Name:        f.Name,
+		ReleaseDate: f.ReleaseDate,
+		Duration:    f.Duration,
+		Score:       f.Score,
+		Comment:     f.Comment,
+	}
 }
 
 func LoadFilmByID(db DB, id uint64) (*Film, *errs.Error) {
