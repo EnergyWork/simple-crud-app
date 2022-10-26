@@ -5,17 +5,20 @@ import (
 	"simple-crud-app/internal/models"
 )
 
-func Prepare(db models.DB, req Request) *errs.Error {
-	// authorization
-	if errApi := req.Authorize(db); errApi != nil {
-		return errApi
+func Prepare(db models.DB, req Request, auth bool) *errs.Error {
+	// if authorized request
+	if auth {
+		// authorization
+		if errApi := req.Authorize(db); errApi != nil {
+			return errApi
+		}
+		// check session
+		if errApi := req.CheckSession(db); errApi != nil {
+			return errApi
+		}
 	}
 	// validation
 	if errApi := req.Validate(); errApi != nil {
-		return errApi
-	}
-	// check session
-	if errApi := req.CheckSession(db); errApi != nil {
 		return errApi
 	}
 	return nil

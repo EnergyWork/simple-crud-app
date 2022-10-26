@@ -19,6 +19,10 @@ type RespCreateSerial struct {
 	rest.Header
 }
 
+func (obj *ReqCreateSerial) Execute() (rest.Response, *errs.Error) {
+	return nil, nil
+}
+
 func (obj *ReqCreateSerial) Validate() *errs.Error {
 	if obj.Serial.Name == "" {
 		return errs.New().SetCode(errs.ErrorRequestSyntax).SetMsg("Serial.Name must be not empty")
@@ -40,13 +44,13 @@ func (s *Server) CreateSerial(w http.ResponseWriter, r *http.Request) {
 	resp := &RespCreateSerial{}
 
 	//unmarshal input request into struct
-	if errApi := rest.CreateRequest(r, &s.BaseServer, req, http.MethodPost); errApi != nil {
+	if errApi := rest.CreateRequest(r, s.GetDB(), req, true); errApi != nil {
 		rest.CreateResponseError(w, errApi)
 		l.Errorf("error: unable create request - %s", errApi)
 		return
 	}
 
-	if errApi := rest.Prepare(s.GetDB(), req); errApi != nil {
+	if errApi := rest.Prepare(s.GetDB(), req, true); errApi != nil {
 		rest.CreateResponseError(w, errApi)
 		l.Errorf("error: %s", errApi)
 		return

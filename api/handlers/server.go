@@ -19,21 +19,31 @@ type Server struct {
 func NewHttpServer(cfg *config.Config) *Server {
 	s = &Server{}
 	s.InitBase(cfg)
-	s.configureRouter()
 	return s
 }
 
-func (s *Server) configureRouter() {
+func (s *Server) ConfigureRouter() {
+	authHandler := NewAuthHandler(s.GetDB())
+	filmsHandler := NewFilmsHandler(s.GetDB())
+
 	router := http.NewServeMux()
-	router.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("Pong")) })
-	router.HandleFunc("/auth/registration", Registration) // [POST]
-	router.HandleFunc("/auth/login", s.AuthLogin)         // [POST]
-	router.HandleFunc("/auth/logout", s.AuthLogout)       // [POST]
-	router.HandleFunc("/films/list", s.FilmList)          // [POST]
-	router.HandleFunc("/films/create", s.CreateFilm)      // [POST]
-	router.HandleFunc("/films/delete", s.FilmDelete)      // [POST]
-	router.HandleFunc("/films/update", s.FilmUpdate)      // [POST]
+
+	router.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("pong"))
+	})
+
+	router.HandleFunc("/auth/registration", authHandler.Registration) // [POST]
+	router.HandleFunc("/auth/login", authHandler.Login)               // [POST]
+	router.HandleFunc("/auth/logout", authHandler.Logout)             // [POST]
+
+	router.HandleFunc("/films/list", filmsHandler.List)     // [POST]
+	router.HandleFunc("/films/create", filmsHandler.Create) // [POST]
+	router.HandleFunc("/films/delete", s.FilmDelete)        // [POST]
+	router.HandleFunc("/films/update", s.FilmUpdate)        // [POST]
+
 	wrappedMux := middleware.NewLoggerRequest(router)
+
 	s.SetRouter(wrappedMux)
 }
 

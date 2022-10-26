@@ -29,7 +29,7 @@ func (obj *ReqAuthRegister) Validate() *errs.Error {
 	return nil
 }
 
-func (obj *ReqAuthRegister) Execute() (*RespAuthRegister, *errs.Error) {
+func (obj *ReqAuthRegister) Execute() (rest.Response, *errs.Error) {
 	l := logger.NewLogger().SetMethod("Registration").SetID(obj.ReqID) // configure a logger
 
 	out := &RespAuthRegister{} // definition of response struct

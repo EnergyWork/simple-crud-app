@@ -14,7 +14,6 @@ type Header struct {
 	Error     *errs.Error  `json:"Error"`
 	AccessKey string       `json:"-"`
 	Login     string       `json:"-"`
-	Digest    string       `json:"-"`
 	ReqID     string       `json:"-"`
 	Language  language.Tag `json:"-"`
 
@@ -28,7 +27,7 @@ const (
 )
 
 // SetHeader sets request headers to header struct
-func (h *Header) SetHeader(r *http.Request, s *BaseServer) {
+func (h *Header) SetHeader(r *http.Request, dbConn *sql.DB) {
 	h.AccessKey = r.Header.Get(AccessKeyHeader)
 	h.Login = r.Header.Get(LoginHeader)
 	lang := r.Header.Get(AcceptLanguage)
@@ -39,7 +38,7 @@ func (h *Header) SetHeader(r *http.Request, s *BaseServer) {
 		h.Language = tag
 	}
 	//
-	h.db = s.GetDB()
+	h.db = dbConn
 }
 
 func (h *Header) SetError(err *errs.Error) {
@@ -50,6 +49,10 @@ func (h *Header) SetReqID(reqID string) {
 	if h.ReqID == "" {
 		h.ReqID = reqID
 	}
+}
+
+func (h *Header) GetReqID() string {
+	return h.ReqID
 }
 
 func (h *Header) GetDB() *sql.DB {

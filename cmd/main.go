@@ -48,6 +48,9 @@ func main() {
 	}
 	l.Infof("Connected to database: %s:%s", cfg.Sql.Host, cfg.Sql.Port)
 
+	server.ConfigureRouter()
+	l.Info("Router configured")
+
 	// run the http server
 	l.Infof("Server listening: %s:%s", cfg.Api.Host, cfg.Api.Port)
 	server.Run()

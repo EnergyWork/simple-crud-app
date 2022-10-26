@@ -17,6 +17,10 @@ type RespFilmUpdate struct {
 	rest.Header
 }
 
+func (obj *ReqFilmUpdate) Execute() (rest.Response, *errs.Error) {
+	return nil, nil
+}
+
 func (obj *ReqFilmUpdate) Validate() *errs.Error {
 	if obj.Film.ID == 0 {
 		return errs.New().SetCode(errs.ErrorRequestSyntax).SetMsg("Film.ID must be not null")
@@ -31,13 +35,13 @@ func (s *Server) FilmUpdate(w http.ResponseWriter, r *http.Request) {
 	resp := &RespFilmUpdate{}
 
 	//unmarshal input request into struct
-	if err := rest.CreateRequest(r, &s.BaseServer, req, http.MethodPost); err != nil {
+	if err := rest.CreateRequest(r, s.GetDB(), req, true); err != nil {
 		rest.CreateResponseError(w, err)
 		l.Errorf("errro: unable create request - %s", err)
 		return
 	}
 
-	if errApi := rest.Prepare(s.GetDB(), req); errApi != nil {
+	if errApi := rest.Prepare(s.GetDB(), req, true); errApi != nil {
 		rest.CreateResponseError(w, errApi)
 		l.Errorf("error: %s", errApi)
 		return
