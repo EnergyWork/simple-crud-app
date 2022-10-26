@@ -8,4 +8,5 @@ type Film struct {
 	Duration    *string    `json:"duration,omitempty"`
 	Score       *uint64    `json:"score,omitempty"`
 	Comment     *string    `json:"comment,omitempty"`
+	Watched     bool       `json:"watched"`
 }

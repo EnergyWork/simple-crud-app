@@ -22,6 +22,7 @@ type ReqCreateFilm struct {
 	Duration    *string    `json:"duration"`
 	Score       *uint64    `json:"score"`
 	Comment     *string    `json:"comment"`
+	Watched     bool       `json:"watched"`
 }
 
 type RespCreateFilm struct {
@@ -32,7 +33,7 @@ func (obj *ReqCreateFilm) Validate() *errs.Error {
 	eng := en.New()
 	uni := ut.New(eng, eng)
 
-	trans, ok := uni.GetTranslator(obj.Language.Parent().String())
+	trans, ok := uni.GetTranslator("en")
 	if !ok {
 		fmt.Println("translator not found")
 		return errs.New().SetCode(errs.ErrorInternal).SetMsg("translator not found")
@@ -70,6 +71,7 @@ func (obj *ReqCreateFilm) Execute() (rest.Response, *errs.Error) {
 		Duration:    obj.Duration,
 		Score:       obj.Score,
 		Comment:     obj.Comment,
+		Watched:     obj.Watched,
 	}
 	if errDb := film.Create(db); errDb != nil {
 		l.Errorf("error: %s", errDb)

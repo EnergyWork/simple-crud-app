@@ -18,11 +18,12 @@ type Film struct {
 	Comment     *string
 	CreatedAt   time.Time
 	UpdatedAt   *time.Time
+	Watched     bool
 }
 
 func (f *Film) Create(db DB) *errs.Error {
-	sqlStr := `INSERT INTO films (user_id, name, release_date, duration, score, comment) VALUES($1, $2, $3, $4, $5, $6);`
-	_, err := db.Exec(sqlStr, f.UserID, f.Name, f.ReleaseDate, f.Duration, f.Score, f.Comment)
+	sqlStr := `INSERT INTO films (user_id, name, release_date, duration, score, comment, watched) VALUES($1, $2, $3, $4, $5, $6, $7);`
+	_, err := db.Exec(sqlStr, f.UserID, f.Name, f.ReleaseDate, f.Duration, f.Score, f.Comment, f.Watched)
 	if err != nil {
 		return errs.New().SetCode(errs.ErrorInternal).SetMsg("failed to create a new record: %s", err)
 	}
@@ -30,8 +31,8 @@ func (f *Film) Create(db DB) *errs.Error {
 }
 
 func (f *Film) Update(db DB) *errs.Error {
-	const sqlStr = `UPDATE films SET name=$1, release_date=$2, duration=$3, score=$4, comment=$5, updated_at=now() WHERE id=$6;`
-	_, err := db.Exec(sqlStr, f.Name, f.ReleaseDate, f.Duration, f.Score, f.Comment, f.ID)
+	const sqlStr = `UPDATE films SET name=$1, release_date=$2, duration=$3, score=$4, comment=$5, updated_at=&8, watched=&7 WHERE id=$6;`
+	_, err := db.Exec(sqlStr, f.Name, f.ReleaseDate, f.Duration, f.Score, f.Comment, f.ID, time.Now(), f.Watched)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return errs.New().SetCode(errs.ErrorNotFound).SetMsg("%s", err)
@@ -61,13 +62,14 @@ func (f *Film) Convert() *domain.Film {
 		Duration:    f.Duration,
 		Score:       f.Score,
 		Comment:     f.Comment,
+		Watched:     f.Watched,
 	}
 }
 
 func LoadFilmByID(db DB, id uint64) (*Film, *errs.Error) {
 	f := &Film{}
 	const sqlStr = `SELECT * FROM films WHERE id=$1`
-	if err := db.QueryRow(sqlStr, id).Scan(&f.ID, &f.UserID, &f.Name, &f.ReleaseDate, &f.Duration, &f.Score, &f.Comment, &f.CreatedAt, &f.UpdatedAt); err != nil {
+	if err := db.QueryRow(sqlStr, id).Scan(&f.ID, &f.UserID, &f.Name, &f.ReleaseDate, &f.Duration, &f.Score, &f.Comment, &f.CreatedAt, &f.UpdatedAt, &f.Watched); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errs.New().SetCode(errs.ErrorNotFound).SetMsg("unable to load film: %s", err)
 		}

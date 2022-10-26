@@ -25,7 +25,7 @@ func (fl *FilmList) GetList(db DB) ([]Film, uint64, *errs.Error) {
 	var list []Film
 	for rows.Next() {
 		tmp := Film{}
-		if err := rows.Scan(&tmp.ID, &tmp.UserID, &tmp.Name, &tmp.ReleaseDate, &tmp.Duration, &tmp.Score, &tmp.Comment, &tmp.CreatedAt, &tmp.UpdatedAt); err != nil {
+		if err := rows.Scan(&tmp.ID, &tmp.UserID, &tmp.Name, &tmp.ReleaseDate, &tmp.Duration, &tmp.Score, &tmp.Comment, &tmp.CreatedAt, &tmp.UpdatedAt, &tmp.Watched); err != nil {
 			return nil, 0, errs.New().SetCode(errs.ErrorInternal).SetMsg("%s", err)
 		}
 		list = append(list, tmp)
