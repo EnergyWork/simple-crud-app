@@ -27,6 +27,7 @@ type ReqCreateFilm struct {
 
 type RespCreateFilm struct {
 	rest.Header
+	// todo : возвращать в ответе сам фильм?
 }
 
 func (obj *ReqCreateFilm) Validate() *errs.Error {

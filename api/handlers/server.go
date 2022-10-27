@@ -44,8 +44,9 @@ func (s *Server) ConfigureRouter() {
 	// film handlers
 	router.HandleFunc("/films/list", filmsHandler.List)
 	router.HandleFunc("/films/create", filmsHandler.Create)
-	router.HandleFunc("/films/delete", filmsHandler.Delete)
+	router.HandleFunc("/films/get", filmsHandler.Read)
 	router.HandleFunc("/films/update", filmsHandler.Update)
+	router.HandleFunc("/films/delete", filmsHandler.Delete)
 
 	// serial handlers
 	/*

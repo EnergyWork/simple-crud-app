@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"github.com/google/uuid"
 	"io"
-	"log"
 	"net/http"
 	errs "simple-crud-app/internal/lib/errors"
 	"simple-crud-app/internal/models"
@@ -26,12 +25,12 @@ func CreateRequest(r *http.Request, dbConn *sql.DB, req Request, authorize bool)
 	// read request body
 	reqBts, err := io.ReadAll(r.Body)
 	if err != nil {
-		return errs.New().SetCode(errs.ErrorInternal).SetMsg("internal system error: read request body")
+		return errs.New().SetCode(errs.ErrorInternal).SetMsg("internal system error: %s", err)
 	}
+
 	// unmarshal bytes to request struct
 	if err := json.Unmarshal(reqBts, &req); err != nil {
-		log.Println(string(reqBts))
-		return errs.New().SetCode(errs.ErrorInternal).SetMsg("internal system error: unmarshal body to request struct")
+		return errs.New().SetCode(errs.ErrorRequestSyntax).SetMsg("unmarshal body to request struct: %s", err)
 	}
 
 	req.SetHeader(r, dbConn)

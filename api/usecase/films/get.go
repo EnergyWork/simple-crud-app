@@ -11,7 +11,7 @@ import (
 
 type ReqFilmGet struct {
 	usecase.CustomHeader
-	ID uint64 `json:"id"`
+	ID uint64 `json:"film_id"`
 }
 
 type RespFilmGet struct {
@@ -20,7 +20,7 @@ type RespFilmGet struct {
 }
 
 func (obj *ReqFilmGet) Validate() *errs.Error {
-	if obj.ID != 0 {
+	if obj.ID == 0 {
 		return errs.New().SetCode(errs.ErrorRequestSyntax).SetMsg("ID must be not null")
 	}
 	return nil

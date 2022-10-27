@@ -18,7 +18,7 @@ type RespFilmDelete struct {
 }
 
 func (obj *ReqFilmDelete) Validate() *errs.Error {
-	if obj.ID != 0 {
+	if obj.ID == 0 {
 		return errs.New().SetCode(errs.ErrorRequestSyntax).SetMsg("ID must be not null")
 	}
 	return nil
@@ -36,6 +36,8 @@ func (obj *ReqFilmDelete) Execute() (rest.Response, *errs.Error) {
 		l.Error(errApi)
 		return nil, errApi
 	}
+
+	l.Infof("film(id:%d) deleted", obj.ID)
 
 	return out, nil
 }

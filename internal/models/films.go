@@ -31,7 +31,7 @@ func (f *Film) Create(db DB) *errs.Error {
 }
 
 func (f *Film) Update(db DB) *errs.Error {
-	const sqlStr = `UPDATE films SET name=$1, release_date=$2, duration=$3, score=$4, comment=$5, updated_at=&8, watched=&7 WHERE id=$6;`
+	const sqlStr = `UPDATE films SET name=$1, release_date=$2, duration=$3, score=$4, comment=$5, updated_at=$7, watched=$8 WHERE id=$6;`
 	_, err := db.Exec(sqlStr, f.Name, f.ReleaseDate, f.Duration, f.Score, f.Comment, f.ID, time.Now(), f.Watched)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -56,9 +56,11 @@ func (f *Film) IsExist(db DB) *errs.Error {
 }
 
 func (f *Film) Convert() *domain.Film {
+	releaseDate := f.ReleaseDate.Unix()
 	return &domain.Film{
+		ID:          f.ID,
 		Name:        f.Name,
-		ReleaseDate: f.ReleaseDate,
+		ReleaseDate: &releaseDate,
 		Duration:    f.Duration,
 		Score:       f.Score,
 		Comment:     f.Comment,
@@ -85,7 +87,7 @@ func DeleteFilmByID(db DB, userId, id uint64) *errs.Error {
 		return errs.New().SetCode(errs.ErrorInternal).SetMsg("failed to check a film exists: %s", errDb)
 	}
 	if !exists {
-		return errs.New().SetCode(errs.ErrorNotFound).SetMsg("film(id:%s) not found", id)
+		return errs.New().SetCode(errs.ErrorNotFound).SetMsg("film(id:%d) not found", id)
 	}
 	const sqlStr = `DELETE FROM films WHERE id=$1;`
 	_, err := db.Exec(sqlStr, id)
