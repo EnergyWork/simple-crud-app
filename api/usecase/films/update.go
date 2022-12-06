@@ -2,6 +2,7 @@ package films
 
 import (
 	"simple-crud-app/api/usecase"
+	"simple-crud-app/internal"
 	"simple-crud-app/internal/domain"
 	errs "simple-crud-app/internal/lib/errors"
 	"simple-crud-app/internal/lib/logger"
@@ -50,7 +51,11 @@ func (obj *ReqFilmUpdate) Execute() (rest.Response, *errs.Error) {
 	}
 
 	if obj.Film.ReleaseDate != nil {
-		rd := time.Unix(*obj.Film.ReleaseDate, 0)
+		rd, err := time.Parse(internal.ReleaseDateLayout, *obj.Film.ReleaseDate)
+		if err != nil {
+			l.Errorf("release_date format error: %s", err)
+			return nil, errs.New().SetCode(errs.ErrorRequestSyntax).SetMsg("release_date format error: %s", err)
+		}
 		film.ReleaseDate = &rd
 	}
 

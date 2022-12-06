@@ -1,28 +1,26 @@
 package films
 
 import (
-	"fmt"
-	"simple-crud-app/api/usecase"
 	"time"
 
-	"github.com/go-playground/locales/en"
-	ut "github.com/go-playground/universal-translator"
-	"github.com/go-playground/validator/v10"
-	en_translations "github.com/go-playground/validator/v10/translations/en"
+	"simple-crud-app/api/usecase"
+	"simple-crud-app/internal"
 	errs "simple-crud-app/internal/lib/errors"
 	"simple-crud-app/internal/lib/logger"
 	"simple-crud-app/internal/lib/rest"
 	"simple-crud-app/internal/models"
+
+	"github.com/go-playground/validator/v10"
 )
 
 type ReqCreateFilm struct {
 	usecase.CustomHeader
-	Name        string     `json:"name" validate:"required"`
-	ReleaseDate *time.Time `json:"release_date"`
-	Duration    *string    `json:"duration"`
-	Score       *uint64    `json:"score"`
-	Comment     *string    `json:"comment"`
-	Watched     bool       `json:"watched"`
+	Name        string  `json:"name" validate:"required"`
+	ReleaseDate *string `json:"release_date"`
+	Duration    *string `json:"duration"`
+	Score       *uint64 `json:"score"`
+	Comment     *string `json:"comment"`
+	Watched     bool    `json:"watched"`
 }
 
 type RespCreateFilm struct {
@@ -31,26 +29,9 @@ type RespCreateFilm struct {
 }
 
 func (obj *ReqCreateFilm) Validate() *errs.Error {
-	eng := en.New()
-	uni := ut.New(eng, eng)
-
-	trans, ok := uni.GetTranslator("en")
-	if !ok {
-		fmt.Println("translator not found")
-		return errs.New().SetCode(errs.ErrorInternal).SetMsg("translator not found")
-	}
-
-	validate := validator.New()
-
-	if err := en_translations.RegisterDefaultTranslations(validate, trans); err != nil {
-		fmt.Println(1, err)
-		return errs.New().SetCode(errs.ErrorInternal).SetMsg(err.Error())
-	}
-
-	err := validate.Struct(obj)
+	err := validator.New().Struct(obj)
 	if err != nil {
 		for _, err := range err.(validator.ValidationErrors) {
-			fmt.Println(err.Translate(trans))
 			return errs.New().SetCode(errs.ErrorRequestSyntax).SetMsg("Validation Error: failed in %s parameter", err.Field())
 		}
 	}
@@ -66,14 +47,23 @@ func (obj *ReqCreateFilm) Execute() (rest.Response, *errs.Error) {
 	defer l.Infof("Response: %+v", out)
 
 	film := &models.Film{
-		Name:        obj.Name,
-		UserID:      obj.User.ID,
-		ReleaseDate: obj.ReleaseDate,
-		Duration:    obj.Duration,
-		Score:       obj.Score,
-		Comment:     obj.Comment,
-		Watched:     obj.Watched,
+		Name:     obj.Name,
+		UserID:   obj.User.ID,
+		Duration: obj.Duration,
+		Score:    obj.Score,
+		Comment:  obj.Comment,
+		Watched:  obj.Watched,
 	}
+
+	if obj.ReleaseDate != nil {
+		rd, err := time.Parse(internal.ReleaseDateLayout, *obj.ReleaseDate)
+		if err != nil {
+			l.Errorf("date format error: %s", err)
+			return nil, errs.New().SetCode(errs.ErrorRequestSyntax).SetMsg("release_date format error: %s", err)
+		}
+		film.ReleaseDate = &rd
+	}
+
 	if errDb := film.Create(db); errDb != nil {
 		l.Errorf("error: %s", errDb)
 		return out, errDb

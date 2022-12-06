@@ -44,7 +44,7 @@ func main() {
 
 	// connect to database (connection parameters in the config)
 	if err := server.ConnectToDatabase(); err != nil {
-		l.Fatal(err)
+		l.Fatalf("unable to connect to the database: %s", err)
 	}
 	l.Infof("Connected to database: %s:%s", cfg.Sql.Host, cfg.Sql.Port)
 

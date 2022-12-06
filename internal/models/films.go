@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"simple-crud-app/internal"
 	"simple-crud-app/internal/domain"
 	"time"
 
@@ -56,7 +57,7 @@ func (f *Film) IsExist(db DB) *errs.Error {
 }
 
 func (f *Film) Convert() *domain.Film {
-	releaseDate := f.ReleaseDate.Unix()
+	releaseDate := f.ReleaseDate.Format(internal.ReleaseDateLayout)
 	return &domain.Film{
 		ID:          f.ID,
 		Name:        f.Name,
